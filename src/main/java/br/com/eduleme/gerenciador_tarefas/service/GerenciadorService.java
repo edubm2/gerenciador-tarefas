@@ -68,6 +68,10 @@ public class GerenciadorService {
     // Se nenhum filtro foi enviado, traz a listagem padrão ordenada
     return listar();
     }
-}
+    public List<Gerenciador> buscarPorStatus(boolean realizado) {
+        return gerenciadorRepository.findByRealizado(realizado);
+    }
+} 
+
 
 
