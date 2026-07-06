@@ -1,20 +1,26 @@
+/* =============================================================
+   CONFIGURAÇÃO — AJUSTE AQUI PARA BATER COM O SEU BACKEND JAVA
+   =============================================================
 
+   Estes são os únicos valores que devem precisar de mudança para
+   este frontend conversar com o seu backend Spring Boot.
+*/
 const CONFIG = {
-  
+  // Confirmado a partir do application.properties (server.port = 8081)
+  // e do @RequestMapping("/tarefas") do GerenciadorController — sem
+  // prefixo "/api".
   API_BASE_URL: "http://localhost:8081/tarefas",
 
-  
+  // Nomes dos campos confirmados na entidade Gerenciador.java:
+  // nome, descricao, realizado (boolean). O campo "filtro" existe na
+  // entidade mas não é usado neste frontend — como não tem
+  // @Column(nullable = false), fica NULL sem problema ao criar uma
+  // tarefa pelo formulário.
   FIELDS: {
     id: "id",
-    title: "titulo",
+    title: "nome",
     description: "descricao",
-    realizado: "realizado",
-  },
-
- 
-  STATUS: {
-    pending: "PENDENTE",
-    done: "CONCLUIDA",
+    status: "realizado",
   },
 };
 
@@ -46,19 +52,24 @@ const els = {
 
 els.apiUrlLabel.textContent = CONFIG.API_BASE_URL;
 
-
+/* =============================================================
+   HELPERS DE STATUS
+   "realizado" é booleano: true = concluída, false = pendente
+   ============================================================= */
 function isTaskDone(task) {
-  return task[CONFIG.FIELDS.status] === CONFIG.STATUS.done;
+  return task[CONFIG.FIELDS.status] === true;
 }
 
 function buildStatusPayload(task, done) {
   return {
     ...task,
-    [CONFIG.FIELDS.status]: done ? CONFIG.STATUS.done : CONFIG.STATUS.pending,
+    [CONFIG.FIELDS.status]: done,
   };
 }
 
-
+/* =============================================================
+   CHAMADAS À API
+   ============================================================= */
 async function apiRequest(path, options = {}) {
   const response = await fetch(`${CONFIG.API_BASE_URL}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -71,7 +82,7 @@ async function apiRequest(path, options = {}) {
       const body = await response.json();
       detail = body.message || JSON.stringify(body);
     } catch (_) {
-     
+      /* corpo da resposta não era JSON, ignora */
     }
     throw new Error(`Erro ${response.status} ao chamar a API. ${detail}`);
   }
@@ -91,8 +102,11 @@ async function createTask(payload) {
   });
 }
 
-async function updateTask(id, payload) {
-  return apiRequest(`/${id}`, {
+async function updateTask(payload) {
+  // O @PutMapping do GerenciadorController não recebe {id} na URL —
+  // o id precisa vir dentro do corpo, porque o service só faz
+  // repository.save(gerenciador).
+  return apiRequest("", {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -102,7 +116,9 @@ async function deleteTask(id) {
   return apiRequest(`/${id}`, { method: "DELETE" });
 }
 
-
+/* =============================================================
+   RENDERIZAÇÃO
+   ============================================================= */
 function renderTasks() {
   const filtered = tasks.filter((task) => {
     if (currentFilter === "pending") return !isTaskDone(task);
@@ -160,8 +176,9 @@ function showMessage(text, isError = false) {
   els.listMessage.classList.toggle("is-error", isError);
 }
 
-//HANDLERS
-
+/* =============================================================
+   HANDLERS
+   ============================================================= */
 async function loadTasks() {
   showMessage("Carregando tarefas...");
   try {
@@ -172,7 +189,7 @@ async function loadTasks() {
   } catch (err) {
     console.error(err);
     showMessage(
-      `Não foi possível carregar as tarefas.`,
+      `Não foi possível carregar as tarefas. Verifique se o backend está rodando em ${CONFIG.API_BASE_URL}.`,
       true
     );
   }
@@ -194,15 +211,17 @@ async function handleSubmit(event) {
   const payload = {
     [CONFIG.FIELDS.title]: title,
     [CONFIG.FIELDS.description]: description,
-    [CONFIG.FIELDS.status]: CONFIG.STATUS.pending,
+    [CONFIG.FIELDS.status]: false, // toda tarefa nova começa como pendente
   };
 
   els.submitBtn.disabled = true;
   els.submitBtn.querySelector(".btn-label").textContent = "Adicionando...";
 
   try {
-    const created = await createTask(payload);
-    tasks.unshift(created);
+    // O @PostMapping do GerenciadorController devolve a LISTA inteira
+    // já atualizada (não só a tarefa criada), então substituímos
+    // o estado local por completo.
+    tasks = await createTask(payload);
     renderTasks();
     els.form.reset();
     els.titleInput.focus();
@@ -220,20 +239,23 @@ async function handleToggle(id) {
   if (!task) return;
 
   const nextDone = !isTaskDone(task);
+  // Manda o objeto inteiro (spread de "task") + o novo valor de
+  // "realizado", já que o save() do JPA substitui a linha inteira —
+  // se mandássemos só {id, realizado}, os outros campos (nome,
+  // descricao, filtro...) seriam zerados no banco.
   const payload = buildStatusPayload(task, nextDone);
 
-  // muda a UI antes da resposta do servidor
-  const previous = { ...task };
-  Object.assign(task, payload);
+  const previousTasks = tasks;
+  // Atualização otimista: já reflete na tela antes da resposta do servidor
+  tasks = tasks.map((t) => (t[CONFIG.FIELDS.id] === id ? payload : t));
   renderTasks();
 
   try {
-    const updated = await updateTask(id, payload);
-    Object.assign(task, updated);
+    tasks = await updateTask(payload);
     renderTasks();
   } catch (err) {
     console.error(err);
-    Object.assign(task, previous);
+    tasks = previousTasks;
     renderTasks();
     showMessage("Não foi possível atualizar o status da tarefa.", true);
   }
@@ -243,9 +265,12 @@ async function handleDelete(id, node) {
   node.classList.add("is-removing");
 
   try {
-    await deleteTask(id);
-    tasks = tasks.filter((t) => t[CONFIG.FIELDS.id] !== id);
-    setTimeout(() => renderTasks(), 150);
+    // O @DeleteMapping também devolve a lista inteira já sem o item
+    const updatedList = await deleteTask(id);
+    setTimeout(() => {
+      tasks = updatedList;
+      renderTasks();
+    }, 150);
   } catch (err) {
     console.error(err);
     node.classList.remove("is-removing");
@@ -265,8 +290,9 @@ function handleFilterClick(event) {
   renderTasks();
 }
 
-
-   
+/* =============================================================
+   INICIALIZAÇÃO
+   ============================================================= */
 els.form.addEventListener("submit", handleSubmit);
 els.filterBtns.forEach((btn) => btn.addEventListener("click", handleFilterClick));
 
