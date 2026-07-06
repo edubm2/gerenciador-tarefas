@@ -42,32 +42,32 @@ public class GerenciadorService {
         
     }
 
-    public List<Gerenciador> buscarComFiltros(String nome, String prioridade) {
-        Sort sort = Sort.by("prioridade").descending().and(
-            Sort.by("nome").ascending()
-        );
+    public List<Gerenciador> buscarComFiltros(String nome, String filtro) { 
+    // Ordena por filtro
+    Sort sort = Sort.by("filtro").descending().and(
+        Sort.by("nome").ascending()
+    );
 
-        // Se ambos os filtros foram enviados
-        if (nome != null && prioridade != null) {
-            return gerenciadorRepository.findByNomeContainingIgnoreCaseAndPrioridade(nome, prioridade, sort);
-        }
-        
-        // Se apenas o nome foi enviado
-        if (nome != null) {
-            return gerenciadorRepository.findByNomeContainingIgnoreCase(nome, sort);
-        }
-        
-        // Se apenas a prioridade foi enviada
-        if (prioridade != null) {
-            return gerenciadorRepository.findByPrioridade(prioridade, sort);
-        }
-
-        // Se nenhum filtro foi enviado, traz a listagem padrão ordenada
-        return listar();
+    // Se ambos os filtros foram enviados
+    if (nome != null && filtro != null) {
+        // Corrigido o nome do método para usar AndFiltro
+        return gerenciadorRepository.findByNomeContainingIgnoreCaseAndFiltro(nome, filtro, sort);
     }
-    public List<Gerenciador> buscarPorStatus(boolean realizado) {
-        return gerenciadorRepository.findByRealizado(realizado);
-    }   
+
+    // Se apenas o nome foi enviado
+    if (nome != null) {
+        return gerenciadorRepository.findByNomeContainingIgnoreCase(nome, sort);
+    }
+
+    // Se apenas o filtro foi enviado
+    if (filtro != null) {
+        // 🌟 Agora o Java reconhece a variável 'filtro' perfeitamente!
+        return gerenciadorRepository.findByFiltro(filtro);
+    }
+
+    // Se nenhum filtro foi enviado, traz a listagem padrão ordenada
+    return listar();
+    }
 }
 
 

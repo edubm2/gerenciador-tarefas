@@ -14,10 +14,10 @@ public interface GerenciadorRepository extends JpaRepository<Gerenciador, Long>{
     List<Gerenciador> findByNomeContainingIgnoreCase(String nome, Sort sort);
     
     // Filtra tarefas por uma prioridade específica
-    List<Gerenciador> findByFiltro(String filtro, Sort sort);
+    List<Gerenciador> findByFiltro(String filtro);
     
     // Filtra combinando nome E prioridade ao mesmo tempo
-    List<Gerenciador> findByNomeContainingIgnoreCaseAndPrioridade(String nome, String prioridade, Sort sort);
+    List<Gerenciador> findByNomeContainingIgnoreCaseAndFiltro(String nome, String prioridade, Sort sort);
 
 }
 
