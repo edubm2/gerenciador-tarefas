@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerenciador de Tarefas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">✓</span>
+          <div>
+            <h1>Tarefas</h1>
+            <p class="tagline">organize o que precisa ser feito, na ordem em que precisa ser feito</p>
+          </div>
+        </div>
+        <div class="stats" id="stats" aria-live="polite">
+          <div class="stat">
+            <span class="stat-value" id="statTotal">0</span>
+            <span class="stat-label">total</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statPending">0</span>
+            <span class="stat-label">pendentes</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statDone">0</span>
+            <span class="stat-label">concluídas</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main">
+
+      <section class="panel form-panel">
+        <h2>Nova tarefa</h2>
+        <form id="taskForm" novalidate>
+          <div class="field">
+            <label for="title">Título</label>
+            <input type="text" id="title" name="title" placeholder="Ex.: Revisar proposta do cliente" required maxlength="120" />
+          </div>
+          <div class="field">
+            <label for="description">Descrição</label>
+            <textarea id="description" name="description" placeholder="Detalhes da tarefa (opcional)" rows="3" maxlength="500"></textarea>
+          </div>
+          <div class="form-footer">
+            <span class="field-hint" id="formError" role="alert"></span>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <span class="btn-label">Adicionar tarefa</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="list-header">
+          <h2>Suas tarefas</h2>
+          <div class="filters" role="tablist" aria-label="Filtrar tarefas por status">
+            <button class="filter-btn is-active" data-filter="all" role="tab" aria-selected="true">Todas</button>
+            <button class="filter-btn" data-filter="pending" role="tab" aria-selected="false">Pendentes</button>
+            <button class="filter-btn" data-filter="done" role="tab" aria-selected="false">Concluídas</button>
+          </div>
+        </div>
+
+        <div id="listMessage" class="list-message" hidden></div>
+
+        <ul id="taskList" class="task-list"></ul>
+
+        <div id="emptyState" class="empty-state" hidden>
+          <p class="empty-title">Nada por aqui ainda</p>
+          <p class="empty-copy">Adicione a primeira tarefa usando o formulário ao lado.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <p>Conectado a <code id="apiUrlLabel"></code></p>
+    </footer>
+  </div>
+
+  <!-- Modelo (template) de um card de tarefa, clonado via JavaScript -->
+  <template id="taskTemplate">
+    <li class="task-card" data-id="">
+      <div class="task-status-bar"></div>
+      <div class="task-body">
+        <div class="task-top">
+          <h3 class="task-title"></h3>
+          <span class="badge"></span>
+        </div>
+        <p class="task-description"></p>
+      </div>
+      <div class="task-actions">
+        <button type="button" class="btn btn-toggle" data-action="toggle">
+          <span class="btn-label"></span>
+        </button>
+        <button type="button" class="btn btn-icon btn-delete" data-action="delete" aria-label="Excluir tarefa" title="Excluir tarefa">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+        </button>
+      </div>
+    </li>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
