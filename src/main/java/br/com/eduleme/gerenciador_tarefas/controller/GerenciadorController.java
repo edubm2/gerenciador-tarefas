@@ -42,8 +42,8 @@ public class GerenciadorController {
     }
     
     //Chama o verbo delete com o parametro ID para deletar as tarefas
-    @DeleteMapping({"id"})
-    List<Gerenciador> deletar(Long id){
+    @DeleteMapping({"/{id}"})
+    List<Gerenciador> deletar(@PathVariable Long id){
         return gerenciadorService.deletar(id);
 
     }
