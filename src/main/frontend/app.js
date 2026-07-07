@@ -1,42 +1,35 @@
-/* =============================================================
-   CONFIGURAÇÃO — AJUSTE AQUI PARA BATER COM O SEU BACKEND JAVA
-   =============================================================
 
-   Estes são os únicos valores que devem precisar de mudança para
-   este frontend conversar com o seu backend Spring Boot.
-*/
 const CONFIG = {
-  // Confirmado a partir do application.properties (server.port = 8081)
-  // e do @RequestMapping("/tarefas") do GerenciadorController — sem
-  // prefixo "/api".
+ 
   API_BASE_URL: "http://localhost:8081/tarefas",
 
-  // Nomes dos campos confirmados na entidade Gerenciador.java:
-  // nome, descricao, realizado (boolean). O campo "filtro" existe na
-  // entidade mas não é usado neste frontend — como não tem
-  // @Column(nullable = false), fica NULL sem problema ao criar uma
-  // tarefa pelo formulário.
   FIELDS: {
     id: "id",
     title: "nome",
     description: "descricao",
     status: "realizado",
+    priority: "filtro",
   },
 };
 
-/* =============================================================
-   ESTADO
-   ============================================================= */
+
+function priorityClass(value) {
+  const normalized = (value || "").toLowerCase();
+  if (normalized === "alta") return "is-alta";
+  if (normalized === "baixa") return "is-baixa";
+  return "is-media";
+}
+
 let tasks = [];
 let currentFilter = "all";
+let currentPriorityFilter = "all";
 
-/* =============================================================
-   ELEMENTOS DO DOM
-   ============================================================= */
+
 const els = {
   form: document.getElementById("taskForm"),
   titleInput: document.getElementById("title"),
   descriptionInput: document.getElementById("description"),
+  priorityInput: document.getElementById("priority"),
   formError: document.getElementById("formError"),
   submitBtn: document.getElementById("submitBtn"),
   taskList: document.getElementById("taskList"),
@@ -44,6 +37,7 @@ const els = {
   listMessage: document.getElementById("listMessage"),
   template: document.getElementById("taskTemplate"),
   filterBtns: document.querySelectorAll(".filter-btn"),
+  priorityFilterSelect: document.getElementById("priorityFilter"),
   statTotal: document.getElementById("statTotal"),
   statPending: document.getElementById("statPending"),
   statDone: document.getElementById("statDone"),
@@ -52,10 +46,7 @@ const els = {
 
 els.apiUrlLabel.textContent = CONFIG.API_BASE_URL;
 
-/* =============================================================
-   HELPERS DE STATUS
-   "realizado" é booleano: true = concluída, false = pendente
-   ============================================================= */
+// HELPERS DE STATUS "realizado" é boolean: true = concluída, false = pendente
 function isTaskDone(task) {
   return task[CONFIG.FIELDS.status] === true;
 }
@@ -67,9 +58,8 @@ function buildStatusPayload(task, done) {
   };
 }
 
-/* =============================================================
-   CHAMADAS À API
-   ============================================================= */
+//CHAMADAS À API
+
 async function apiRequest(path, options = {}) {
   const response = await fetch(`${CONFIG.API_BASE_URL}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -82,7 +72,7 @@ async function apiRequest(path, options = {}) {
       const body = await response.json();
       detail = body.message || JSON.stringify(body);
     } catch (_) {
-      /* corpo da resposta não era JSON, ignora */
+  
     }
     throw new Error(`Erro ${response.status} ao chamar a API. ${detail}`);
   }
@@ -116,14 +106,19 @@ async function deleteTask(id) {
   return apiRequest(`/${id}`, { method: "DELETE" });
 }
 
-/* =============================================================
-   RENDERIZAÇÃO
-   ============================================================= */
+//RENDERIZAÇÃO
 function renderTasks() {
   const filtered = tasks.filter((task) => {
-    if (currentFilter === "pending") return !isTaskDone(task);
-    if (currentFilter === "done") return isTaskDone(task);
-    return true;
+    const statusMatch =
+      currentFilter === "pending" ? !isTaskDone(task) :
+      currentFilter === "done" ? isTaskDone(task) :
+      true;
+
+    const priorityMatch =
+      currentPriorityFilter === "all" ||
+      task[CONFIG.FIELDS.priority] === currentPriorityFilter;
+
+    return statusMatch && priorityMatch;
   });
 
   els.taskList.innerHTML = "";
@@ -131,7 +126,7 @@ function renderTasks() {
   if (filtered.length === 0) {
     els.emptyState.hidden = false;
     els.emptyState.querySelector(".empty-copy").textContent =
-      currentFilter === "all"
+      currentFilter === "all" && currentPriorityFilter === "all"
         ? "Adicione a primeira tarefa usando o formulário ao lado."
         : "Nenhuma tarefa corresponde a este filtro.";
   } else {
@@ -142,13 +137,20 @@ function renderTasks() {
     const node = els.template.content.firstElementChild.cloneNode(true);
     const id = task[CONFIG.FIELDS.id];
     const done = isTaskDone(task);
+    const priority = task[CONFIG.FIELDS.priority] || "Média";
 
     node.dataset.id = id;
     node.classList.toggle("is-done", done);
 
     node.querySelector(".task-title").textContent = task[CONFIG.FIELDS.title] || "(sem título)";
     node.querySelector(".task-description").textContent = task[CONFIG.FIELDS.description] || "";
-    node.querySelector(".badge").textContent = done ? "Concluída" : "Pendente";
+
+    const statusBadge = node.querySelector(".badge-status");
+    statusBadge.textContent = done ? "Concluída" : "Pendente";
+
+    const priorityBadge = node.querySelector(".badge-priority");
+    priorityBadge.textContent = priority;
+    priorityBadge.classList.add(priorityClass(priority));
 
     const toggleLabel = node.querySelector('[data-action="toggle"] .btn-label');
     toggleLabel.textContent = done ? "Marcar como pendente" : "Marcar como concluída";
@@ -176,9 +178,6 @@ function showMessage(text, isError = false) {
   els.listMessage.classList.toggle("is-error", isError);
 }
 
-/* =============================================================
-   HANDLERS
-   ============================================================= */
 async function loadTasks() {
   showMessage("Carregando tarefas...");
   try {
@@ -189,7 +188,7 @@ async function loadTasks() {
   } catch (err) {
     console.error(err);
     showMessage(
-      `Não foi possível carregar as tarefas. Verifique se o backend está rodando em ${CONFIG.API_BASE_URL}.`,
+      `Não foi possível carregar as tarefas.`,
       true
     );
   }
@@ -212,6 +211,7 @@ async function handleSubmit(event) {
     [CONFIG.FIELDS.title]: title,
     [CONFIG.FIELDS.description]: description,
     [CONFIG.FIELDS.status]: false, // toda tarefa nova começa como pendente
+    [CONFIG.FIELDS.priority]: els.priorityInput.value,
   };
 
   els.submitBtn.disabled = true;
@@ -219,8 +219,7 @@ async function handleSubmit(event) {
 
   try {
     // O @PostMapping do GerenciadorController devolve a LISTA inteira
-    // já atualizada (não só a tarefa criada), então substituímos
-    // o estado local por completo.
+    // já atualizada (não só a tarefa criada)
     tasks = await createTask(payload);
     renderTasks();
     els.form.reset();
@@ -239,14 +238,14 @@ async function handleToggle(id) {
   if (!task) return;
 
   const nextDone = !isTaskDone(task);
-  // Manda o objeto inteiro (spread de "task") + o novo valor de
+  // Manda o objeto inteiro (spread de "task") e o novo valor de
   // "realizado", já que o save() do JPA substitui a linha inteira —
-  // se mandássemos só {id, realizado}, os outros campos (nome,
+  // se mandasse só o {id, realizado}, os outros campos (nome,
   // descricao, filtro...) seriam zerados no banco.
   const payload = buildStatusPayload(task, nextDone);
 
   const previousTasks = tasks;
-  // Atualização otimista: já reflete na tela antes da resposta do servidor
+
   tasks = tasks.map((t) => (t[CONFIG.FIELDS.id] === id ? payload : t));
   renderTasks();
 
@@ -265,7 +264,7 @@ async function handleDelete(id, node) {
   node.classList.add("is-removing");
 
   try {
-    // O @DeleteMapping também devolve a lista inteira já sem o item
+
     const updatedList = await deleteTask(id);
     setTimeout(() => {
       tasks = updatedList;
@@ -290,10 +289,15 @@ function handleFilterClick(event) {
   renderTasks();
 }
 
-/* =============================================================
-   INICIALIZAÇÃO
-   ============================================================= */
+function handlePriorityFilterChange(event) {
+  currentPriorityFilter = event.target.value;
+  renderTasks();
+}
+
+//INICIALIZAÇÃO
+
 els.form.addEventListener("submit", handleSubmit);
 els.filterBtns.forEach((btn) => btn.addEventListener("click", handleFilterClick));
+els.priorityFilterSelect.addEventListener("change", handlePriorityFilterChange);
 
 loadTasks();

@@ -1,6 +1,4 @@
-/* -----------------------------------------------------------
-   Tokens
-   ----------------------------------------------------------- */
+
 :root {
   --ink: #232847;
   --ink-soft: #565b7d;
@@ -15,6 +13,13 @@
   --pending-bg: #FBEEE0;
   --done: #3E8E63;
   --done-bg: #E6F3EB;
+
+  --prio-high: #B33F3F;
+  --prio-high-bg: #F9E6E4;
+  --prio-medium: #9C7A1E;
+  --prio-medium-bg: #F6EFDD;
+  --prio-low: #3E6E8E;
+  --prio-low-bg: #E5EEF4;
 
   --danger: #C1462F;
 
@@ -53,9 +58,6 @@ html, body {
   flex-direction: column;
 }
 
-/* -----------------------------------------------------------
-   Header
-   ----------------------------------------------------------- */
 .app-header {
   background: var(--accent);
   color: #fff;
@@ -131,9 +133,6 @@ html, body {
   margin-top: 4px;
 }
 
-/* -----------------------------------------------------------
-   Layout
-   ----------------------------------------------------------- */
 .app-main {
   flex: 1;
   max-width: 980px;
@@ -166,9 +165,6 @@ html, body {
   margin: 0 0 18px;
 }
 
-/* -----------------------------------------------------------
-   Form
-   ----------------------------------------------------------- */
 .field {
   margin-bottom: 16px;
 }
@@ -182,7 +178,8 @@ html, body {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   font-family: var(--font-body);
   font-size: 14.5px;
@@ -196,7 +193,8 @@ html, body {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
@@ -214,9 +212,7 @@ html, body {
   min-height: 1em;
 }
 
-/* -----------------------------------------------------------
-   Buttons
-   ----------------------------------------------------------- */
+
 .btn {
   font-family: var(--font-body);
   font-size: 14px;
@@ -265,9 +261,7 @@ html, body {
 
 .btn-icon:hover { color: var(--danger); background: rgba(193, 70, 47, 0.08); }
 
-/* -----------------------------------------------------------
-   Filters
-   ----------------------------------------------------------- */
+
 .list-header {
   display: flex;
   align-items: center;
@@ -278,6 +272,31 @@ html, body {
 }
 
 .list-header h2 { margin: 0; }
+
+.list-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.priority-filter {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.priority-filter:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 
 .filters {
   display: flex;
@@ -306,9 +325,6 @@ html, body {
   color: #fff;
 }
 
-/* -----------------------------------------------------------
-   Task list
-   ----------------------------------------------------------- */
 .task-list {
   list-style: none;
   margin: 18px 0 0;
@@ -385,22 +401,45 @@ html, body {
   word-break: break-word;
 }
 
-.badge {
+.badges {
+  display: flex;
+  gap: 6px;
   flex-shrink: 0;
+}
+
+.badge {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 4px 9px;
   border-radius: 999px;
-  background: var(--pending-bg);
-  color: var(--pending);
   white-space: nowrap;
 }
 
-.task-card.is-done .badge {
+.badge-status {
+  background: var(--pending-bg);
+  color: var(--pending);
+}
+
+.task-card.is-done .badge-status {
   background: var(--done-bg);
   color: var(--done);
+}
+
+.badge-priority.is-alta {
+  background: var(--prio-high-bg);
+  color: var(--prio-high);
+}
+
+.badge-priority.is-media {
+  background: var(--prio-medium-bg);
+  color: var(--prio-medium);
+}
+
+.badge-priority.is-baixa {
+  background: var(--prio-low-bg);
+  color: var(--prio-low);
 }
 
 .task-actions {
@@ -413,9 +452,6 @@ html, body {
   border-left: 1px solid var(--line);
 }
 
-/* -----------------------------------------------------------
-   Empty / message states
-   ----------------------------------------------------------- */
 .empty-state {
   text-align: center;
   padding: 48px 20px;
@@ -448,9 +484,6 @@ html, body {
   color: var(--danger);
 }
 
-/* -----------------------------------------------------------
-   Footer
-   ----------------------------------------------------------- */
 .app-footer {
   text-align: center;
   padding: 18px;
@@ -465,7 +498,7 @@ html, body {
   color: var(--accent);
 }
 
-/* Keyboard focus visibility */
+
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {

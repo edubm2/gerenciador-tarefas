@@ -52,6 +52,14 @@
             <label for="description">Descrição</label>
             <textarea id="description" name="description" placeholder="Detalhes da tarefa (opcional)" rows="3" maxlength="500"></textarea>
           </div>
+          <div class="field">
+            <label for="priority">Prioridade</label>
+            <select id="priority" name="priority">
+              <option value="Baixa">Baixa</option>
+              <option value="Média" selected>Média</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </div>
           <div class="form-footer">
             <span class="field-hint" id="formError" role="alert"></span>
             <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -64,10 +72,18 @@
       <section class="panel list-panel">
         <div class="list-header">
           <h2>Suas tarefas</h2>
-          <div class="filters" role="tablist" aria-label="Filtrar tarefas por status">
-            <button class="filter-btn is-active" data-filter="all" role="tab" aria-selected="true">Todas</button>
-            <button class="filter-btn" data-filter="pending" role="tab" aria-selected="false">Pendentes</button>
-            <button class="filter-btn" data-filter="done" role="tab" aria-selected="false">Concluídas</button>
+          <div class="list-controls">
+            <div class="filters" role="tablist" aria-label="Filtrar tarefas por status">
+              <button class="filter-btn is-active" data-filter="all" role="tab" aria-selected="true">Todas</button>
+              <button class="filter-btn" data-filter="pending" role="tab" aria-selected="false">Pendentes</button>
+              <button class="filter-btn" data-filter="done" role="tab" aria-selected="false">Concluídas</button>
+            </div>
+            <select id="priorityFilter" class="priority-filter" aria-label="Filtrar por prioridade">
+              <option value="all">Toda prioridade</option>
+              <option value="Baixa">Baixa</option>
+              <option value="Média">Média</option>
+              <option value="Alta">Alta</option>
+            </select>
           </div>
         </div>
 
@@ -88,14 +104,17 @@
     </footer>
   </div>
 
-  <!-- Modelo (template) de um card de tarefa, clonado via JavaScript -->
+
   <template id="taskTemplate">
     <li class="task-card" data-id="">
       <div class="task-status-bar"></div>
       <div class="task-body">
         <div class="task-top">
           <h3 class="task-title"></h3>
-          <span class="badge"></span>
+          <div class="badges">
+            <span class="badge badge-priority"></span>
+            <span class="badge badge-status"></span>
+          </div>
         </div>
         <p class="task-description"></p>
       </div>
